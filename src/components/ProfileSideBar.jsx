@@ -4,8 +4,8 @@ import NewPostModal from "./NewPostModal";
 import { useState } from "react";
 
 export default function ProfileSideBar({ handleLogout }) {
-    const [show, setShow] = useState(false)
-    const handleClose = () => setShow(false) + window.location.reload();;
+    const [show, setShow] = useState(false);
+    const handleClose = () => setShow(false);
     const handleShow = () => setShow(true);
 
     return (

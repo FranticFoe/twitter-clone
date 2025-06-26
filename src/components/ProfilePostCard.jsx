@@ -1,14 +1,40 @@
 import { useEffect, useState } from "react";
 import { Button, Col, Image, Row } from "react-bootstrap";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 
 export default function ProfilePostCard({ content, postId }) {
-    const [likes, setLikes] = useState(0);
+    const [likes, setLikes] = useState([]);
     const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
+    const BASE_URL = "https://9f6ca3a9-de60-4fe5-80bc-2030987995cb-00-2drp1qaur4ve1.sisko.replit.dev";
+    const token = localStorage.getItem("authToken");
+    const decoded = jwtDecode(token);
+    const userId = decoded.id;
+    const isLiked = likes.some((like) => like.user_id === userId);
+    const addToLikes = () => {
+        axios.post(`${BASE_URL}/likes`, { user_id: userId, post_id: postId })
+            .then((response) => {
+                setLikes([...likes, { ...response.data, likes_id: response.data.id }]);
+            })
+            .catch((error) => console.error("Error:", error));
+    };
+    const removeFromLikes = () => {
+        const like = likes.find((like) => like.user_id === userId);
+        if (like) {
+            axios.put(`${BASE_URL}/likes/${userId}/${postId}`)
+                .then(() => {
+                    setLikes(likes.filter((likeItem) => likeItem.user_id !== userId));
+                })
+                .catch((error) => console.error("Error:", error));
+        }
+    };
+    const handleLike = () => (isLiked ? removeFromLikes() : addToLikes());
+
 
     useEffect(() => {
-        fetch(`https://9f6ca3a9-de60-4fe5-80bc-2030987995cb-00-2drp1qaur4ve1.sisko.replit.dev/likes/posts/${postId}`)
+        fetch(`${BASE_URL}/likes/posts/${postId}`)
             .then((response) => response.json())
-            .then((data) => setLikes(data.length))
+            .then((data) => setLikes(data))
             .catch((error) => console.error("Error:", error));
     }, [postId]);
 
@@ -35,9 +61,9 @@ export default function ProfilePostCard({ content, postId }) {
                     <Button variant="light">
                         <i className="bi bi-repeat"></i>
                     </Button>
-                    <Button variant="light">
-                        <i className="bi bi-heart">{likes}</i>
-
+                    <Button variant="light" onClick={handleLike}>
+                        {isLiked ? (<i className="bi bi-heart-fill text-danger"></i>) : (<i className="bi bi-heart"></i>)}
+                        {likes.length}
                     </Button>
                     <Button variant="light">
                         <i className="bi bi-graph-up"></i>
@@ -47,7 +73,7 @@ export default function ProfilePostCard({ content, postId }) {
                     </Button>
                 </div>
             </Col>
-        </Row>
+        </Row >
     )
 }
 

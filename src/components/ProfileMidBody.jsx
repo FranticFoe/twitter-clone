@@ -1,28 +1,26 @@
-import { Button, Col, Image, Nav, Row } from "react-bootstrap";
+import { Button, Col, Image, Nav, Row, Spinner } from "react-bootstrap";
 import ProfilePostCard from "./ProfilePostCard";
 import { jwtDecode } from "jwt-decode";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPostsByUser } from "../Features/posts/postsSlice";
 
 export default function ProfileMidBody() {
     const url = "https://pbs.twimg.com/profile_banners/83072625/1602845571/1500x500";
     const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
-    const [post, setPost] = useState([]);
+    const dispatch = useDispatch();
 
-    const fetchPosts = (userId) => {
-        fetch(`https://41df07c8-abc7-492f-91bd-7bc117736acb-00-3h83abzui9ib4.sisko.replit.dev/posts/users/${userId}`)
-            .then((response) => response.json())
-            .then((data) => setPost(data))
-            .catch((err) => console.error("Error", err));
-    }
+    const post = useSelector((store) => store.posts.posts);
+    const loading = useSelector((store) => store.posts.loading);
 
     useEffect(() => {
         const token = localStorage.getItem("authToken");
         if (token) {
             const decodedToken = jwtDecode(token);
             const userId = decodedToken.id
-            fetchPosts(userId)
+            dispatch(fetchPostsByUser(userId))
         }
-    }, []);
+    }, [dispatch]);
 
     return (
         <Col sm={6} className="bg-light" style={{ border: "1px solid lightgrey" }}>
@@ -79,12 +77,16 @@ export default function ProfileMidBody() {
                     <Nav.Link eventKey="link-4">Likes</Nav.Link>
                 </Nav.Item>
             </Nav>
+            {loading && (
+                <Spinner animation="border" className="ms-3 mt-3" variant="primary" />
+            )}
+
             {post.length > 0 ? (
                 post.map((post) => (
                     <ProfilePostCard key={post.id} content={post.content} postId={post.id} />
                 ))
             ) : (
-                <p>No posts yet</p>
+                <p className="text-center">No posts have been made yet.</p>
             )}
 
         </Col>
