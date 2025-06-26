@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import useLocalStorage from "use-local-storage";
 import { useNavigate } from "react-router-dom";
+//url of the api needs to be replaced if trying to run this code 
 
 export default function AuthPage() {
     const loginImage = "https://sig1.co/img-twitter-1"
