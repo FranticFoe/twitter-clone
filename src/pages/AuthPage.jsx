@@ -1,50 +1,49 @@
 import { Button, Col, Image, Row, Modal, Form } from "react-bootstrap";
-import { useState, useEffect } from "react";
-import axios from "axios";
-import useLocalStorage from "use-local-storage";
+import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-//url of the api needs to be replaced if trying to run this code 
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, } from "firebase/auth";
+import { AuthContext } from "../components/AuthProvider";
+
 
 export default function AuthPage() {
     const loginImage = "https://sig1.co/img-twitter-1"
-    const url = "https://41df07c8-abc7-492f-91bd-7bc117736acb-00-3h83abzui9ib4.sisko.replit.dev"
     const handleClose = () => setModalShow(null);
     const [username, setUserName] = useState("");
     const [password, setPassword] = useState("")
     const [modalShow, setModalShow] = useState(null);
     const handleShowSignUp = () => setModalShow("SignUp");
     const handleShowLogin = () => setModalShow("Login")
-    const [authToken, setAuthToken] = useLocalStorage("authToken", "");
 
     const navigate = useNavigate();
+    const auth = getAuth();
+    const { currentUser } = useContext(AuthContext);
 
     useEffect(() => {
-        if (authToken) {
+        if (currentUser) {
             navigate("/profile");
         }
-    }, [authToken, navigate])
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try {
-            const res = await axios.post(`${url}/login`, { username, password });
-            if (res.data && res.data.auth === true && res.data.token) {
-                setAuthToken(res.data.token);
-                console.log("Login succesfull, auth token saved.")
-            }
-        } catch (err) {
-            console.error(err)
-        }
-    }
+    }, [currentUser, navigate]);
+
 
     const handleSignUp = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`${url}/signup`, { username, password });
-            console.log(res.data)
+            const res = await createUserWithEmailAndPassword(auth, username, password);
+            console.log("Succesfully created user", res.user);
         } catch (err) {
-            console.error(err);
+            console.log(err)
         }
-    }
+    };
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await signInWithEmailAndPassword(auth, username, password);
+            console.log("Succesfully logged in user", res.user);
+        } catch (err) {
+            console.log(err)
+        }
+    };
 
     return (
         <Row>
