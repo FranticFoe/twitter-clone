@@ -10,6 +10,16 @@ export default function ProfilePostCard({ content, postId }) {
     const token = localStorage.getItem("authToken");
     const decoded = jwtDecode(token);
     const userId = decoded.id;
+
+    console.log("This is likes array", likes);
+
+    useEffect(() => {
+        fetch(`${BASE_URL}/likes/posts/${postId}`)
+            .then((response) => response.json())
+            .then((data) => setLikes(data))
+            .catch((error) => console.error("Error:", error));
+    }, [postId]);
+
     const isLiked = likes.some((like) => like.user_id === userId);
     const addToLikes = () => {
         axios.post(`${BASE_URL}/likes`, { user_id: userId, post_id: postId })
@@ -31,12 +41,7 @@ export default function ProfilePostCard({ content, postId }) {
     const handleLike = () => (isLiked ? removeFromLikes() : addToLikes());
 
 
-    useEffect(() => {
-        fetch(`${BASE_URL}/likes/posts/${postId}`)
-            .then((response) => response.json())
-            .then((data) => setLikes(data))
-            .catch((error) => console.error("Error:", error));
-    }, [postId]);
+
 
     return (
         <Row
