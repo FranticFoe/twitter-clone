@@ -1,7 +1,7 @@
 import { Button, Col, Image, Row, Modal, Form } from "react-bootstrap";
 import { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, } from "firebase/auth";
+import { createUserWithEmailAndPassword, getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, } from "firebase/auth";
 import { AuthContext } from "../components/AuthProvider";
 
 
@@ -13,6 +13,19 @@ export default function AuthPage() {
     const [modalShow, setModalShow] = useState(null);
     const handleShowSignUp = () => setModalShow("SignUp");
     const handleShowLogin = () => setModalShow("Login")
+
+    const provider = new GoogleAuthProvider();
+    const handleGoogleLogIn = async (e) => {
+        e.preventDefault();
+        try {
+            provider.setCustomParameters({
+                prompt: "select_account", // Forces account chooser popup
+            });
+            await signInWithPopup(getAuth(), provider);
+        } catch (err) {
+            console.error("Error signing in with Google", err);
+        }
+    };
 
     const navigate = useNavigate();
     const auth = getAuth();
@@ -42,6 +55,7 @@ export default function AuthPage() {
             console.log("Succesfully logged in user", res.user);
         } catch (err) {
             console.log(err)
+            setModalShow("LoginError");
         }
     };
 
@@ -58,7 +72,7 @@ export default function AuthPage() {
                 <h2 className="my-5 fw-bold" style={{ fontSize: 31 }}>Join Twitter Today.</h2>
 
                 <Col sm={5} className="d-grid gap-2">
-                    <Button style={{ fontFamily: "sans-serif" }} className="rounded-pill d-flex justify-content-center align-items-center gap-2" variant="outline-dark"><i className="bi bi-google"></i> Sign up with Google</Button>
+                    <Button onClick={handleGoogleLogIn} style={{ fontFamily: "sans-serif" }} className="rounded-pill d-flex justify-content-center align-items-center gap-2" variant="outline-dark"><i className="bi bi-google" ></i> Sign up with Google</Button>
                     <Button style={{ fontFamily: "sans-serif" }} className="rounded-pill d-flex justify-content-center align-items-center gap-2 fw-bold" variant="outline-dark"><i className="bi bi-apple"></i>Sign up with Apple</Button>
                     <div style={{
                         display: "flex",
@@ -92,6 +106,14 @@ export default function AuthPage() {
                             </p>
                             <Button className="rounded-pill" type="submit"> {modalShow === "SignUp" ? "Sign up" : "Log in"}</Button>
                         </Form>
+                    </Modal.Body>
+                </Modal>
+
+                <Modal size="sm" show={modalShow === "LoginError"} onHide={handleClose} animation={false} centered>
+                    <Modal.Body>
+                        <h2 className="mb-4" style={{ fontWeight: "bold" }}>Login Error</h2>
+                        <p>There was an error logging in. Please check your email and password and try again.</p>
+                        <Button className="rounded-pill" onClick={handleClose}>Close</Button>
                     </Modal.Body>
                 </Modal>
 
