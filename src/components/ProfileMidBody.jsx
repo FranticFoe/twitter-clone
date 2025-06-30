@@ -1,6 +1,10 @@
 import { Button, Col, Image, Nav, Row, Spinner } from "react-bootstrap";
 import ProfilePostCard from "./ProfilePostCard";
 import { useSelector } from "react-redux";
+import { useEffect, useContext } from "react";
+import { useDispatch } from "react-redux";
+import { AuthContext } from "./AuthProvider";
+import { fetchPostsByUser } from "../Features/posts/postsSlice";
 
 export default function ProfileMidBody() {
     const url = "https://pbs.twimg.com/profile_banners/83072625/1602845571/1500x500";
@@ -9,6 +13,12 @@ export default function ProfileMidBody() {
 
     const post = useSelector((store) => store.posts.posts);
     const loading = useSelector((store) => store.posts.loading);
+    const dispatch = useDispatch();
+    const { currentUser } = useContext(AuthContext);
+
+    useEffect(() => {
+        dispatch(fetchPostsByUser(currentUser.uid));
+    }, [dispatch, currentUser]);
 
     // useEffect(() => {
     //     const token = localStorage.getItem("authToken");
@@ -80,7 +90,7 @@ export default function ProfileMidBody() {
 
             {post.length > 0 ? (
                 post.map((post) => (
-                    <ProfilePostCard key={post.id} content={post.content} postId={post.id} />
+                    <ProfilePostCard key={post.id} post={post} />
                 ))
             ) : (
                 <p className="text-center">No posts have been made yet.</p>

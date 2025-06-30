@@ -1,42 +1,85 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-import { jwtDecode } from "jwt-decode";
-
-const BASE_URL = "https://9f6ca3a9-de60-4fe5-80bc-2030987995cb-00-2drp1qaur4ve1.sisko.replit.dev";
+import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (userId) => {
     try {
-        const response = await fetch(`${BASE_URL}/posts/users/${userId}`);
-        return response.json();
+        const postsRef = collection(db, `users/${userId}/posts`);
+
+        const querySnapshot = await getDocs(postsRef);
+        const docs = querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+        }));
+        return docs;
     } catch (err) {
-        console.error(err);
+        console.error("Error fetching posts by user:", err);
+        throw err
     }
 });
 
 export const savePost = createAsyncThunk(
-    "posts/savePost", async (postContent) => {
-        const token = localStorage.getItem("authToken");
-        const decoded = jwtDecode(token);
-        const userId = decoded.id;
-
-        const data = {
-            user_id: userId,
-            title: "Post Title",
-            content: postContent
-        };
-
+    "posts/savePost", async ({ userId, postContent }) => {
         try {
-            const response = await axios.post(`${BASE_URL}/posts/`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
+            const postsRef = collection(db, `users/${userId}/posts`);
+            console.log(`users/${userId}/posts`);
+            const newPostRef = doc(postsRef);
+            await setDoc(newPostRef, {
+                content: postContent,
+                likes: []
             });
-            return response.data;
+            const newPost = await getDoc(newPostRef);
+            const post = {
+                id: newPost.id,
+                ...newPost.data(),
+            }
+            return post;
         } catch (err) {
             console.error("Error saving post:", err);
         }
     }
 )
+
+export const likePost = createAsyncThunk(
+    "posts/likePost", async ({ userId, postId }) => {
+        try {
+            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const docSnap = await getDoc(postRef);
+            if (docSnap.exists()) {
+
+                const postData = docSnap.data();
+                const likes = [...postData.likes, userId];
+                console.log("postData", postData)
+                console.log("likes", likes)
+                await setDoc(postRef, {
+                    ...postData, likes
+                });
+            }
+            return { userId, postId };
+        } catch (err) {
+            console.error("Error liking post:", err);
+        }
+    }
+);
+
+export const removeLikeFromPost = createAsyncThunk(
+    "posts/removeLikeFromPost", async ({ userId, postId }) => {
+        try {
+            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const docSnap = await getDoc(postRef);
+            if (docSnap.exists()) {
+                const postData = docSnap.data();
+                const likes = postData.likes.filter((id) => id !== userId);
+                await setDoc(postRef, {
+                    ...postData, likes
+                });
+            }
+            return { userId, postId };
+        } catch (err) {
+            console.error("Error removing like from post:", err);
+        }
+    }
+);
 
 const postsSlice = createSlice({
     name: "posts",
@@ -48,11 +91,27 @@ const postsSlice = createSlice({
                 state.posts = action.payload;
                 state.loading = false;
             })
-        builder.addCase(savePost.fulfilled, (state, action) => {
-            state.posts = [action.payload, ...state.posts];
-            state.loading = false;
-        });
+            .addCase(savePost.fulfilled, (state, action) => {
+                state.posts = [action.payload, ...state.posts];
+            })
+            .addCase(likePost.fulfilled, (state, action) => {
+                const { userId, postId } = action.payload;
+                const postIndex = state.posts.findIndex((post) => post.id === postId);
+                if (postIndex !== -1) {
+                    state.posts[postIndex].likes.push(userId)
+                }
+            })
+            .addCase(removeLikeFromPost.fulfilled, (state, action) => {
+                const { userId, postId } = action.payload;
+                const postIndex = state.posts.findIndex((post) => post.id === postId);
+                if (postIndex !== -1) {
+                    state.posts[postIndex].likes = state.posts[postIndex].likes.filter(id => id !== userId);
+                }
+            })
     }
-})
+}
+)
+
+
 
 export default postsSlice.reducer
