@@ -4,13 +4,16 @@ import { AuthContext } from "./AuthProvider";
 import { useDispatch } from "react-redux";
 import { likePost, removeLikeFromPost } from "../Features/posts/postsSlice";
 import UpdatePostModal from "./UpdatePostModal";
+import DeletePostModal from "./DeletePostModal";
 
 export default function ProfilePostCard({ post }) {
     const pic = "https://pbs.twimg.com/profile_images/1587405892437221376/h167Jlb2_400x400.jpg";
     const [showUpdateModal, setShowUpdateModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
     const handleShowUpdateModal = () => setShowUpdateModal(true);
     const handleCloseUpdateModal = () => setShowUpdateModal(false);
-
+    const handleShowDeleteModal = () => setShowDeleteModal(true);
+    const handleCloseDeleteModal = () => setShowDeleteModal(false);
 
     console.log("post", post);
 
@@ -58,7 +61,7 @@ export default function ProfilePostCard({ post }) {
                             >
                                 <i className="bi bi-pencil-square"></i>
                             </Button>
-                            <Button variant="danger">
+                            <Button variant="danger" onClick={handleShowDeleteModal}>
                                 <i className="bi bi-trash"></i>
                             </Button>
                         </div>
@@ -100,6 +103,13 @@ export default function ProfilePostCard({ post }) {
                 originalPostContent={content}
                 imageUrl={imageUrl}
             />
+            <DeletePostModal
+                show={showDeleteModal}
+                handleClose={handleCloseDeleteModal}
+                userId={userId}
+                postId={postId}
+            />
+
         </>
     )
 }
