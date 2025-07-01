@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { collection, doc, getDoc, getDocs, setDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { collection, doc, getDoc, getDocs, setDoc, updateDoc } from "firebase/firestore";
+import { db, storage } from "../../firebase";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { uploadBytesResumable } from "firebase/storage";
 
 export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (userId) => {
     try {
@@ -19,26 +21,53 @@ export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (use
 });
 
 export const savePost = createAsyncThunk(
-    "posts/savePost", async ({ userId, postContent }) => {
+    "posts/savePost",
+    async ({ userId, postContent, file }) => {
         try {
-            const postsRef = collection(db, `users/${userId}/posts`);
-            console.log(`users/${userId}/posts`);
-            const newPostRef = doc(postsRef);
-            await setDoc(newPostRef, {
-                content: postContent,
-                likes: []
-            });
-            const newPost = await getDoc(newPostRef);
-            const post = {
-                id: newPost.id,
-                ...newPost.data(),
+            let imageUrl = "";
+            if (file !== null) {
+                const timestamp = Date.now();
+                const imageRef = ref(storage, `posts/${timestamp}_${file.name}`);
+                const response = await uploadBytes(imageRef, file);
+                imageUrl = await getDownloadURL(response.ref);
             }
-            return post;
+            const postRef = collection(db, `users/${userId}/posts`);
+            const newPostRef = doc(postRef);
+            await setDoc(newPostRef, { content: postContent, likes: [], imageUrl });
+            const newPost = await getDoc(newPostRef);
+            return { id: newPost.id, ...newPost.data() };
         } catch (err) {
             console.error("Error saving post:", err);
         }
     }
-)
+);
+
+export const updatePost = createAsyncThunk(
+    "posts/updatePost", async ({ userId, postId, newPostContent, newFile }) => {
+        try {
+            let newImageUrl;
+            if (newFile) {
+                const imageRef = ref(storage, `posts/${newFile.name}`);
+                const response = await uploadBytesResumable(imageRef, newFile);
+                const url = await getDownloadURL(response.ref);
+                newImageUrl = `${url}`;
+            }
+            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postSnap = await getDoc(postRef);
+            if (postSnap.exists()) {
+                const postData = postSnap.data();
+                const updatedData = { ...postData, content: newPostContent || postData.content, imageUrl: newImageUrl || postData.imageUrl };
+                await updateDoc(postRef, updatedData);
+                const updatedPost = { id: postId, ...updatedData };
+                return updatedPost;
+            } else {
+                throw new Error("Post does not exist");
+            }
+        } catch (err) {
+            console.error("Error updating post:", err);
+        }
+    }
+);
 
 export const likePost = createAsyncThunk(
     "posts/likePost", async ({ userId, postId }) => {
@@ -108,6 +137,13 @@ const postsSlice = createSlice({
                     state.posts[postIndex].likes = state.posts[postIndex].likes.filter(id => id !== userId);
                 }
             })
+            .addCase(updatePost.fulfilled, (state, action) => {
+                const updatedPost = action.payload;
+                const postIndex = state.posts.findIndex((post) => post.id === updatedPost.id);
+                if (postIndex !== -1) {
+                    state.posts[postIndex] = updatedPost;
+                }
+            });
     }
 }
 )
