@@ -27,7 +27,8 @@ export const savePost = createAsyncThunk(
             if (file !== null) {
                 const imageRef = ref(storage, `posts/${file.name}`);
                 await uploadBytes(imageRef, file);
-                imageUrl = await getDownloadURL(imageRef); // ✅ no const here
+                imageUrl = await getDownloadURL(imageRef);
+                console.log("Image URL:", imageUrl)
             }
 
             const postRef = collection(db, `users/${userId}/posts`);
