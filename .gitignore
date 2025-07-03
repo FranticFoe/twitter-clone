@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 # Important user details and keys
-src/firebase.js
+.env
