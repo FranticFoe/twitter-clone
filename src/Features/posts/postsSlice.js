@@ -5,7 +5,7 @@ import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (userId) => {
     try {
-        const postsRef = collection(db, `users/${userId}/posts`);
+        const postsRef = collection(db, `users / ${userId} / posts`);
 
         const querySnapshot = await getDocs(postsRef);
         const docs = querySnapshot.docs.map((doc) => ({
@@ -20,43 +20,39 @@ export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (use
 });
 
 export const savePost = createAsyncThunk(
-    "posts/savePost",
-    async ({ userId, postContent, file }) => {
+    "posts/savePost", async ({ userId, postContent, file }) => {
         try {
             let imageUrl = "";
             if (file !== null) {
-                const imageRef = ref(storage, `posts/${file.name}`);
-                await uploadBytes(imageRef, file);
-                imageUrl = await getDownloadURL(imageRef);
-                console.log("Image URL:", imageUrl)
+                const imageRef = ref(storage, `posts / ${file.name}`);
+                const response = await uploadBytes(imageRef, file);
+                imageUrl = await getDownloadURL(response.ref);
             }
-
-            const postRef = collection(db, `users/${userId}/posts`);
+            const postRef = collection(db, `users / ${userId} / posts`);
             const newPostRef = doc(postRef);
             await setDoc(newPostRef, { content: postContent, likes: [], imageUrl });
-
             const newPost = await getDoc(newPostRef);
             const post = {
                 id: newPost.id,
                 ...newPost.data(),
-            };
+            }
             return post;
         } catch (err) {
             console.error("Error saving post:", err);
         }
     }
-);
+)
 
 export const updatePost = createAsyncThunk(
     "posts/updatePost", async ({ userId, postId, newPostContent, newFile }) => {
         try {
             let newImageUrl;
             if (newFile) {
-                const imageRef = ref(storage, `posts/${newFile.name}`);
-                await uploadBytes(imageRef, newFile);
-                newImageUrl = await getDownloadURL(imageRef);
+                const imageRef = ref(storage, `posts / ${newFile.name}`);
+                const response = await uploadBytes(imageRef, newFile);
+                newImageUrl = await getDownloadURL(response.ref);
             }
-            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postRef = doc(db, `users / ${userId} / posts / ${postId}`);
             const postSnap = await getDoc(postRef);
             if (postSnap.exists()) {
                 const postData = postSnap.data();
@@ -76,7 +72,7 @@ export const updatePost = createAsyncThunk(
 export const deletePost = createAsyncThunk(
     "posts/deletePost", async ({ userId, postId }) => {
         try {
-            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postRef = doc(db, `users / ${userId} / posts / ${postId}`);
             await deleteDoc(postRef);
             return postId;
         } catch (err) {
@@ -88,7 +84,7 @@ export const deletePost = createAsyncThunk(
 export const likePost = createAsyncThunk(
     "posts/likePost", async ({ userId, postId }) => {
         try {
-            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postRef = doc(db, `users / ${userId} / posts / ${postId}`);
             const docSnap = await getDoc(postRef);
             if (docSnap.exists()) {
 
@@ -110,7 +106,7 @@ export const likePost = createAsyncThunk(
 export const removeLikeFromPost = createAsyncThunk(
     "posts/removeLikeFromPost", async ({ userId, postId }) => {
         try {
-            const postRef = doc(db, `users/${userId}/posts/${postId}`);
+            const postRef = doc(db, `users / ${userId} / posts / ${postId}`);
             const docSnap = await getDoc(postRef);
             if (docSnap.exists()) {
                 const postData = docSnap.data();
