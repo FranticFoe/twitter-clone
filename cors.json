@@ -2,7 +2,7 @@
     {
         "origin": [
             "http://localhost:5173",
-            "https://twitter-clone-tau.vercel.app/"
+            "https://twitter-clone-tau.vercel.app"
         ],
         "method": [
             "GET",

@@ -20,28 +20,31 @@ export const fetchPostsByUser = createAsyncThunk("posts/fetchByUser", async (use
 });
 
 export const savePost = createAsyncThunk(
-    "posts/savePost", async ({ userId, postContent, file }) => {
+    "posts/savePost",
+    async ({ userId, postContent, file }) => {
         try {
             let imageUrl = "";
             if (file !== null) {
                 const imageRef = ref(storage, `posts/${file.name}`);
-                const response = await uploadBytes(imageRef, file);
-                imageUrl = await getDownloadURL(response.ref);
+                await uploadBytes(imageRef, file);
+                imageUrl = await getDownloadURL(imageRef); // ✅ no const here
             }
+
             const postRef = collection(db, `users/${userId}/posts`);
             const newPostRef = doc(postRef);
             await setDoc(newPostRef, { content: postContent, likes: [], imageUrl });
+
             const newPost = await getDoc(newPostRef);
             const post = {
                 id: newPost.id,
                 ...newPost.data(),
-            }
+            };
             return post;
         } catch (err) {
             console.error("Error saving post:", err);
         }
     }
-)
+);
 
 export const updatePost = createAsyncThunk(
     "posts/updatePost", async ({ userId, postId, newPostContent, newFile }) => {
@@ -49,8 +52,8 @@ export const updatePost = createAsyncThunk(
             let newImageUrl;
             if (newFile) {
                 const imageRef = ref(storage, `posts/${newFile.name}`);
-                const response = await uploadBytes(imageRef, newFile);
-                newImageUrl = await getDownloadURL(response.ref);
+                await uploadBytes(imageRef, newFile);
+                newImageUrl = await getDownloadURL(imageRef);
             }
             const postRef = doc(db, `users/${userId}/posts/${postId}`);
             const postSnap = await getDoc(postRef);
