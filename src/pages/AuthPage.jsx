@@ -74,6 +74,7 @@ export default function AuthPage() {
                 <Col sm={5} className="d-grid gap-2">
                     <Button onClick={handleGoogleLogIn} style={{ fontFamily: "sans-serif" }} className="rounded-pill d-flex justify-content-center align-items-center gap-2" variant="outline-dark"><i className="bi bi-google" ></i> Sign up with Google</Button>
                     <Button style={{ fontFamily: "sans-serif" }} className="rounded-pill d-flex justify-content-center align-items-center gap-2 fw-bold" variant="outline-dark"><i className="bi bi-apple"></i>Sign up with Apple</Button>
+                    <Button className="rounded-pill" variant="outline-dark"><i className="bi bi-facebook">Sign up with Facebook</i></Button>
                     <div style={{
                         display: "flex",
                         alignItems: "center",

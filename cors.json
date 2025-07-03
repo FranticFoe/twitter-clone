@@ -1,0 +1,17 @@
+[
+    {
+        "origin": [
+            "http://localhost:5173",
+            "https://twitter-clone-tau.vercel.app/"
+        ],
+        "method": [
+            "GET",
+            "POST",
+            "PUT"
+        ],
+        "responseHeader": [
+            "Content-Type"
+        ],
+        "maxAgeSeconds": 3600
+    }
+]
