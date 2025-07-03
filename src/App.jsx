@@ -6,6 +6,7 @@ import Store from "./Store";
 import { AuthProvider } from "./components/AuthProvider";
 
 export default function App() {
+  console.log("Storage bucket:", import.meta.env.VITE_STORAGE_BUCKET);
   return (
     <>
       <AuthProvider>
